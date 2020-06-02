@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+var databaseRoutingTag = "influxdb_database"
+
 func createDialConn(addr string) (net.Conn, error) {
 	URL, err := url.Parse(addr)
 	if err != nil {
@@ -30,18 +32,22 @@ func createDialConn(addr string) (net.Conn, error) {
 
 // ClientImpl ...
 type ClientImpl struct {
-	conn net.Conn
+	conn     net.Conn
+	database string
 }
 
 // NewClientImpl returns an initiated Telegraf client.
 //
 // Ex usage:
 //
-// > client := NewClientImpl("tcp://127.0.0.1:8094")
-func NewClientImpl(addr string) (*ClientImpl, error) {
+// > client := NewClientImpl("tcp://127.0.0.1:8094", "spu")
+func NewClientImpl(addr string, database string) (*ClientImpl, error) {
 	// }
 	conn, err := createDialConn(addr)
-	return &ClientImpl{conn}, err
+	return &ClientImpl{
+		conn,
+		database,
+	}, err
 }
 
 // Close ...
@@ -52,6 +58,9 @@ func (t *ClientImpl) Close() {
 // WritePoint will write a single metric. For multiple metrics at once,
 // use WritePoints.
 func (t *ClientImpl) WritePoint(p *Metric) error {
+	if p.Tags == nil || p.Tags[databaseRoutingTag] == nil {
+		p.Tags[databaseRoutingTag] = t.database
+	}
 	_, err := fmt.Fprintln(t.conn, p.toLP(true))
 	return err
 }
