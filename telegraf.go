@@ -40,14 +40,19 @@ type ClientImpl struct {
 //
 // Ex usage:
 //
-// > client := NewClientImpl("tcp://127.0.0.1:8094", "spu")
-func NewClientImpl(addr string, database string) (*ClientImpl, error) {
+// > client := NewClientImpl("tcp://127.0.0.1:8094")
+func NewClientImpl(addr string) (*ClientImpl, error) {
 	// }
 	conn, err := createDialConn(addr)
 	return &ClientImpl{
 		conn,
-		database,
+		"",
 	}, err
+}
+
+// SetDatabase sets the influxdb_database tag value to be used
+func (t *ClientImpl) SetDatabase(database string) {
+	t.database = database
 }
 
 // Close ...
@@ -58,9 +63,7 @@ func (t *ClientImpl) Close() {
 // WritePoint will write a single metric. For multiple metrics at once,
 // use WritePoints.
 func (t *ClientImpl) WritePoint(p *Metric) error {
-	if p.Tags == nil || p.Tags[databaseRoutingTag] == nil {
-		p.Tags[databaseRoutingTag] = t.database
-	}
+	p.addDatabaseTag(*t)
 	_, err := fmt.Fprintln(t.conn, p.toLP(true))
 	return err
 }
@@ -69,8 +72,19 @@ func (t *ClientImpl) WritePoint(p *Metric) error {
 func (t *ClientImpl) WritePoints(p []*Metric) error {
 	var pointArr []string
 	for _, m := range p {
+		m.addDatabaseTag(*t)
 		pointArr = append(pointArr, m.toLP(true))
 	}
 	_, err := fmt.Fprintln(t.conn, strings.Join(pointArr, "\n"))
 	return err
+}
+
+func (p *Metric) addDatabaseTag(t ClientImpl) {
+	if !p.hasDatabaseTag() && t.database != "" {
+		p.Tags[databaseRoutingTag] = t.database
+	}
+}
+
+func (p *Metric) hasDatabaseTag() bool {
+	return p.Tags != nil && p.Tags[databaseRoutingTag] != nil
 }
