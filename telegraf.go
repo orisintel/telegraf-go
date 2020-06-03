@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-var databaseRoutingTag = "influxdb_database"
-
 func createDialConn(addr string) (net.Conn, error) {
 	URL, err := url.Parse(addr)
 	if err != nil {
