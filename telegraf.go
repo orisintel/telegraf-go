@@ -43,11 +43,11 @@ type ClientImpl struct {
 // > client := NewClientImpl("tcp://127.0.0.1:8094")
 func NewClientImpl(addr string) (*ClientImpl, error) {
 	conn, err := createDialConn(addr)
-	defaultTags := new(map[string]interface{})
+	defaultTags := make(map[string]interface{})
 
 	return &ClientImpl{
 		conn,
-		*defaultTags,
+		defaultTags,
 	}, err
 }
 
