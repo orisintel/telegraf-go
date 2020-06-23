@@ -30,6 +30,20 @@ func TestToLP(t *testing.T) {
 	// }
 }
 
+func TestEmptyTags(t *testing.T) {
+	testMetric := &Metric{
+		Measurement: "testM",
+		Tags:        nil,
+		Fields:      map[string]interface{}{"field1": 2},
+	}
+	clpString := testMetric.toLP(false)
+	expected := "testM field1=2i"
+	if clpString != expected {
+		emsg := fmt.Sprintf("Did not format point properly - got: %s, expected: %s", clpString, expected)
+		t.Errorf(emsg)
+	}
+}
+
 func TestGetFieldString(t *testing.T) {
 	v := "fooString"
 	fs := getFieldString(v)

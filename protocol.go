@@ -16,10 +16,10 @@ type Metric struct {
 // toLP translates the initiated metric struct to the outgoing
 // influxDB line protocol format
 func (t *Metric) toLP(withTimestamp bool) string {
-	tags := formatAttr(t.Tags, false)
+	tags := formatTags(t.Tags)
 	fields := formatAttr(t.Fields, true)
 
-	base := fmt.Sprintf("%s,%s %s", t.Measurement, tags, fields)
+	base := fmt.Sprintf("%s%s %s", t.Measurement, tags, fields)
 
 	if withTimestamp {
 		utc, _ := time.LoadLocation("UTC")
@@ -29,6 +29,14 @@ func (t *Metric) toLP(withTimestamp bool) string {
 	}
 
 	return base
+}
+
+func formatTags(tags map[string]interface{}) string {
+	if tags == nil {
+		return ""
+	}
+
+	return fmt.Sprintf(",%s", formatAttr(tags, false))
 }
 
 func escapeString(s string) string {
